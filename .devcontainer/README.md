@@ -26,7 +26,7 @@ FROM ubuntu:26.04
 - 基础构建：`build-essential`、`pkg-config`
 - Shell 与排障：`zsh`、`vim`、`less`、`tree`、`htop`
 - 文本与 JSON：`jq`、`ripgrep`、`fd`、`bat`
-- 脚本与文档：`python3`、`nodejs`、`npm`、`graphviz`、`@mermaid-js/mermaid-cli`
+- 脚本与文档：`python3`、`pre-commit`、`nodejs`、`npm`、`graphviz`、`@mermaid-js/mermaid-cli`
 - 协作：`git`、`gh`
 - Locale：`en_US.UTF-8`
 
@@ -63,6 +63,7 @@ gh --version
 python3 --version
 node --version
 npm --version
+pre-commit --version
 rg --version
 fd --version
 bat --version

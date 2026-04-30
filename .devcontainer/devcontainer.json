@@ -4,7 +4,7 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && python3 --version && node --version && gh --version",
+  "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pre-commit install --install-hooks && python3 --version && node --version && gh --version && pre-commit --version",
   "customizations": {
     "vscode": {
       "settings": {

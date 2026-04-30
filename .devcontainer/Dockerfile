@@ -26,6 +26,7 @@ RUN apt-get update && apt-get upgrade -y && \
     locales \
     python3 \
     python3-pip \
+    python3-venv \
     python-is-python3 \
     graphviz \
     nodejs \
@@ -48,6 +49,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get update \
     && apt-get install --no-install-recommends -y gh \
     && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/pre-commit \
+    && /opt/pre-commit/bin/pip install --no-cache-dir --upgrade pip pre-commit \
+    && ln -s /opt/pre-commit/bin/pre-commit /usr/local/bin/pre-commit \
+    && pre-commit --version
 
 RUN npm install -g @mermaid-js/mermaid-cli
 
