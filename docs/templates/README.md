@@ -6,6 +6,8 @@
 
 | 模板 | 用途 | 建议目标位置 |
 |------|------|--------------|
+| `sad.md` | 当前软件架构、架构视图、约束、质量属性 | `docs/SAD.md` |
+| `sdd.md` | 当前系统或子系统设计、接口、数据模型、状态机、算法 | `docs/SDD.md` |
 | `local-AGENTS.md` | 模块、crate、服务、硬件子系统的局部协作规则 | 模块根目录 `AGENTS.md` |
 | `hardware-design.md` | 硬件设计、接口、拓扑、测试夹具和生产约束 | `docs/hardware/YYYY-MM-DD-topic.md` |
 | `supplier-record.md` | 供应商、外协、第三方交付物和验收记录 | `docs/suppliers/vendor-name.md` |

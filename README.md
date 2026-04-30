@@ -94,6 +94,8 @@ TODO：说明如何打开 Dev Container，以及本项目额外的 `postCreateCo
 - `SECURITY.md`：安全漏洞报告流程
 - `docs/conventions.md`：语言、文档、测试、安全等项目约定
 - `docs/git.md`：Git 工作流和 commit 规范
+- `docs/SAD.md`：可选，软件架构文档（Software Architecture Document）
+- `docs/SDD.md`：可选，软件设计文档（Software Design Document）
 - `docs/adr/`：架构决策
 - `docs/rfcs/`：提案
 - `docs/specs/`：设计文档

@@ -43,6 +43,8 @@
 | `CONTRIBUTING.md` | 人类贡献流程、PR 要求、review 要求 |
 | `docs/conventions.md` | 语言、文档、测试、安全、Dev Container 等长期约定 |
 | `docs/git.md` | Git 工作流、commit 规范、DCO、破坏性操作规则 |
+| `docs/SAD.md` | 可选，Software Architecture Document，描述当前软件架构、约束、视图和质量属性 |
+| `docs/SDD.md` | 可选，Software Design Document，描述当前系统或子系统设计细节 |
 | `docs/adr/` | 已经做出的架构决策 |
 | `docs/rfcs/` | 决策前的较大提案 |
 | `docs/specs/` | 功能或子系统设计 |
@@ -75,6 +77,8 @@
 > 创建新项目时，替换成本项目真实架构。
 
 本节必须用可执行的结构说明项目架构。能画图时优先使用 Mermaid 或 PlantUML，图和文字必须保持同步。
+
+如果项目维护 `docs/SAD.md` 或 `docs/SDD.md`，本节应保留最高优先级的不变量和阅读入口；SAD/SDD 承载更完整的架构视图和设计细节。二者冲突时，必须在同一个变更中修正。
 
 ### 系统上下文
 
@@ -137,7 +141,7 @@ App --> Store : TODO
 
 1. 依赖方向必须明确。
 2. 新增跨模块依赖时，PR 描述必须说明理由。
-3. 公开 API、数据模型、存储结构、协议边界变化，必须在 PR 描述中显式标注。
+3. 公开 API、数据模型、存储结构、协议边界变化，必须在 PR 描述中显式标注，并按影响同步更新 SAD/SDD/Spec。
 4. 如果一个架构决策不明显，或拒绝了一个合理备选方案，应写 ADR。
 
 ## 项目级硬约束

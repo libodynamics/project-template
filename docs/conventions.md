@@ -32,6 +32,8 @@ repo/
     README.md
     conventions.md
     git.md
+    SAD.md                # 可选，Software Architecture Document
+    SDD.md                # 可选，Software Design Document
     adr/
     rfcs/
     specs/
@@ -156,6 +158,18 @@ repo/
 - 图表描述的是当前承诺状态；如果只是备选方案，应在标题或说明中标注。
 - 硬件连接、生产步骤、供应商边界和 SOP 流程变化时，必须同步更新相关图表。
 
+### SAD 与 SDD
+
+SAD（Software Architecture Document）用于描述项目当前架构，回答“系统由什么组成、边界在哪里、关键质量属性和运行/部署视图是什么”。SDD（Software Design Document）用于描述当前系统或子系统设计，回答“接口、数据模型、状态机、算法、错误处理、并发和验证如何落地”。
+
+规则：
+
+- SAD/SDD 是当前状态文档；ADR/RFC 记录决策历史和提案过程，不能替代 SAD/SDD。
+- 架构边界、运行时模型、部署视图、硬件/供应商/生产边界变化时，应更新 SAD。
+- 公开接口、数据模型、状态机、核心算法、错误处理、并发模型或生成物契约变化时，应更新 SDD。
+- 大项目可以维护项目级 `docs/SAD.md`/`docs/SDD.md`，也可以按子系统拆分，但根文档必须提供索引。
+- 新项目如果暂时不维护 SAD/SDD，应在 `README.md` 或 `AGENTS.md` 说明架构与设计真值源在哪里。
+
 ### ADR 规则
 
 需要写 ADR 的情况：
@@ -191,7 +205,7 @@ docs/rfcs/NNNN-title.md
 
 ### Spec 与 Plan 规则
 
-Spec 用于设计阶段：
+Spec 用于设计阶段，记录某个功能或子系统的设计输入。设计稳定后，应同步到 SDD 或在 SDD 中链接：
 
 ```text
 docs/specs/YYYY-MM-DD-topic-design.md

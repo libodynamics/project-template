@@ -40,6 +40,8 @@
 | 安装、编译、运行、测试、打包、发布命令 | `README.md` |
 | 项目级规则或架构不变量 | `AGENTS.md` |
 | 模块局部契约或依赖约束 | 最近的局部 `AGENTS.md` |
+| 当前架构视图、约束、运行时/部署视图 | `docs/SAD.md` |
+| 当前系统或子系统设计细节 | `docs/SDD.md` 或 `docs/specs/` |
 | 非显然架构决策 | `docs/adr/` 与 `docs/adr/README.md` |
 | 大功能或子系统设计 | `docs/rfcs/` 或 `docs/specs/` |
 | 多步骤实施工作 | `docs/plans/` |
