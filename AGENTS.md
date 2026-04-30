@@ -92,6 +92,8 @@ repo/
 - macOS/Linux 开发者按公司策略使用 Docker Desktop 或 Docker Engine。
 - 硬件访问、签名、公证、GUI 验证、平台安装包构建，可能需要原生机器或 self-hosted runner。
 
+模板默认 Dev Container 基于 Ubuntu 26.04 LTS。通用工具放在 `.devcontainer/Dockerfile`；语言工具链、SDK、数据库、模拟器、交叉编译器、硬件工具由派生项目按需添加并记录在 `README.md`。
+
 项目级安装、编译、运行、测试、发布命令只写在 `README.md`。
 
 ## 架构
@@ -304,4 +306,3 @@ Plan 至少包含：
 - 活跃计划：TODO
 - 已知技术债：TODO
 - 下一个里程碑：TODO
-
