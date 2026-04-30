@@ -72,6 +72,30 @@ repo/
 
 项目级安装、编译、运行、测试、发布命令只写在 `README.md`。
 
+## 依赖与版本策略
+
+- 原则上，项目使用的包、依赖、工具链、基础镜像和开发环境应采用当前可用的最新稳定版本。
+- 持续更新是默认要求。派生项目应在 README、CI、自动化依赖更新工具或维护计划中说明如何保持更新。
+- 版本锁定用于保证构建可复现，不代表永久冻结。锁文件、基础镜像 tag、工具链版本和 SDK 版本都需要定期更新。
+- 如果不能使用最新稳定版本，必须说明原因，例如平台兼容、客户认证、硬件 SDK 限制、监管要求、上游缺陷或安全例外。
+- 例外必须包含影响范围、替代方案和重新评估条件。
+- 自动更新建议：
+  - 依赖库：使用 Dependabot、Renovate 或平台等效工具。
+  - 容器基础镜像：定期检查 LTS tag 和安全公告。
+  - 语言工具链：优先跟随当前稳定版或项目声明的 LTS 线。
+  - 开发容器：定期重新构建，避免缓存掩盖过期依赖。
+
+## JSON 与 JSONC
+
+- 默认情况下，`.json` 文件应保持严格 JSON，避免注释和尾随逗号，以兼容通用解析器、CI、包管理器和第三方工具。
+- 只有明确由规范或主流工具声明支持 JSONC 的文件，才允许使用 JSONC。
+- `.devcontainer/devcontainer.json` 是例外：Dev Container 规范和 GitHub Codespaces 均将其定义为 JSONC（JSON with Comments），因此可以使用 `// Copyright ...` 形式的文件头。
+- 对于 `package.json`、API schema、数据 fixture、机器交换数据等严格 JSON 文件，不要使用注释或尾随逗号。
+- `tsconfig.json` 等部分生态配置虽然常见 JSONC 支持，但仍应按该工具链的官方说明和校验工具配置决定，不能把 JSONC 作为所有 `.json` 文件的默认格式。
+- 如果必须给严格 JSON 文件记录版权或元信息，优先使用规范允许的字段，例如 `_copyright`；如果 schema 不允许额外字段，则在相邻文档、LICENSE/NOTICE 或生成脚本中说明，不要破坏 JSON 兼容性。
+- 校验工具必须匹配格式：JSON 文件用 JSON parser；JSONC 文件用支持 comments 的 parser 或先剥离注释再校验。
+- 参考：Dev Container 规范说明 `devcontainer.json` 是 JSONC；GitHub Codespaces 文档也要求校验器按 JSONC 而不是 JSON 处理该文件。
+
 ## 文档规则
 
 ### 新鲜度契约

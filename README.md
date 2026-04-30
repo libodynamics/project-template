@@ -67,10 +67,6 @@ TODO：说明如何打开 Dev Container，以及本项目额外的 `postCreateCo
 - `docs/specs/`：设计文档
 - `docs/plans/`：实施计划
 
-## 语言策略
-
-项目以中文为首选语言；技术术语、缩写、代码变量、函数名、类型名、模块名、命令、配置键等保持英文或其所在生态的通用写法。详细规则见 `AGENTS.md`。
-
 ## Commit 规范
 
 默认采用 Conventional Commits 风格，subject 中文优先，type/scope 保持英文，例如 `feat(api): 支持 OAuth callback`。详细规则见 `docs/git.md`。
