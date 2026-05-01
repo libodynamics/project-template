@@ -87,7 +87,9 @@
 
 模板 Dev Container 默认使用 `dev` 用户作为交互用户，默认 shell 是 `zsh`，并允许免密码 `sudo`。Dockerfile 构建阶段仍按 Docker 默认行为使用 root；派生项目确实需要交互式密码时，必须在 README 说明原因和设置方式。
 
-Docker、Docker Compose、Dev Container 和 CI 示例中的 bind mount 必须保持在当前项目边界内：宿主机源路径使用仓库根目录或仓库内子目录，例如 `$PWD`、`${GITHUB_WORKSPACE}` 或 `${localWorkspaceFolder}`；容器内目标路径使用项目工作区，例如 `/workspace` 或 `${containerWorkspaceFolder}`。不要随意挂载宿主机全局目录、用户主目录、上级目录、系统目录或临时目录。确实需要挂载项目外目录时，必须说明用途、最小权限、只读/读写边界、数据生命周期和清理方式。
+Docker、Docker Compose、Dev Container 和 CI 示例中的 bind mount 必须保持在当前项目边界内：宿主机源路径使用仓库根目录或仓库内子目录，例如 `$PWD`、`${GITHUB_WORKSPACE}` 或 `${localWorkspaceFolder}`；容器内目标路径使用项目工作区，例如 `/workspace` 或 `${containerWorkspaceFolder}`。不要随意挂载宿主机全局目录、用户主目录、上级目录、系统目录或临时目录。
+
+宿主机调用 Docker 执行编译、生成、打包或文档构建时，需要保留的产物必须写回当前项目目录下声明的产物目录，例如 `build/`、`dist/`、`target/`、`out/`、`docs/generated/` 或项目自定义目录。命令不能把唯一产物留在容器临时文件系统、匿名 volume、用户主目录、上级目录或项目外缓存目录。确实需要挂载项目外目录时，必须说明用途、最小权限、只读/读写边界、数据生命周期和清理方式。
 
 项目级安装、编译、运行、测试、发布命令只写在 `README.md`。
 

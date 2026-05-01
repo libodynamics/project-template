@@ -75,7 +75,7 @@ docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcon
 docker run --rm -v "$PWD:/workspace" -w /workspace project-template-devcontainer:latest bash -lc 'pre-commit run --all-files && rustc --version && node --version && npm --version && devcontainer --version && mmdc --version && plantuml -version && ncu --version'
 ```
 
-手动 `docker run`、Compose volume 和 Dev Container mount 只能把当前仓库或仓库内子目录挂载到容器项目工作区内，例如 `$PWD:/workspace`。不要把用户主目录、上级目录、系统目录或无关临时目录挂入容器。
+手动 `docker run`、Compose volume 和 Dev Container mount 只能把当前仓库或仓库内子目录挂载到容器项目工作区内，例如 `$PWD:/workspace`。不要把用户主目录、上级目录、系统目录或无关临时目录挂入容器。宿主机调用 Docker 编译后，需要保留的产物应写到项目目录下的 `build/`、`dist/`、`target/`、`out/` 或项目声明的产物目录，确保退出容器后仍能在宿主机项目目录中看到。
 
 CI 会在 `main` 分支和每周定时任务中把基础镜像发布为：
 

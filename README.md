@@ -32,6 +32,7 @@ docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcon
 - [ ] 根据真实团队更新 `.github/CODEOWNERS`。
 - [ ] 确认 MIT 许可证是否适用；不适用时替换 `LICENSE` 并同步 README。
 - [ ] 补齐安装、编译、运行、测试、打包、发布命令及运行位置。
+- [ ] 声明 Docker/Dev Container 编译产物目录，确保宿主机可在当前项目目录下看到需要保留的产物。
 - [ ] 补齐架构边界、运行模式、验证模式、硬件/外部服务依赖和残余风险。
 - [ ] 根据项目需要启用或调整 branch protection、DCO、CI、review 和发布门禁。
 - [ ] 删除不适用的硬件、生产、供应商、SOP 或文档模板章节。
