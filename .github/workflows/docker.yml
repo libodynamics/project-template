@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/devcontainer
+  BASE_DEVCONTAINER_IMAGE: libodynamics/project_template/devcontainer
 
 jobs:
   build:
@@ -38,4 +38,4 @@ jobs:
           pull: true
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.BASE_DEVCONTAINER_IMAGE }}:latest

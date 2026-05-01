@@ -13,7 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/devcontainer
+  BASE_DEVCONTAINER_IMAGE: ghcr.io/libodynamics/project_template/devcontainer
+  DEVCONTAINER_IMAGE: project-template-devcontainer
+  DEVCONTAINER_CONTAINER: project-template-devcontainer
 
 jobs:
   template:
@@ -51,24 +53,24 @@ jobs:
         run: |
           docker build --pull \
             -f .devcontainer/base.Dockerfile \
-            -t "${IMAGE_NAME}:latest" \
-            -t ghcr.io/libodynamics/project_template/devcontainer:latest \
+            -t "${BASE_DEVCONTAINER_IMAGE}:latest" \
             .devcontainer
 
       - name: Build derived devcontainer
         run: |
           docker build --pull=false \
             -f .devcontainer/Dockerfile \
-            -t project-template-devcontainer:ci \
+            -t "${DEVCONTAINER_IMAGE}:latest" \
             .devcontainer
 
       - name: Run template checks in container
         run: |
           docker run --rm \
+            --name "${DEVCONTAINER_CONTAINER}" \
             --mount "type=bind,src=${GITHUB_WORKSPACE},dst=/workspace" \
             -e HOME=/tmp/project-template-ci \
             -w /workspace \
-            project-template-devcontainer:ci \
+            "${DEVCONTAINER_IMAGE}:latest" \
             bash -lc '
               mkdir -p "$HOME" &&
               git config --global --add safe.directory /workspace &&

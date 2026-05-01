@@ -27,7 +27,7 @@
   .devcontainer/
     devcontainer.json
     Dockerfile
-    base.Dockerfile      # 模板仓库维护基础镜像时使用
+    base.Dockerfile      # 仅模板仓库或自建基础镜像的项目保留
     compose.yaml          # 可选，仅在本地开发需要多服务时使用
     scripts/              # 可选，容器初始化脚本
   docs/
@@ -85,11 +85,20 @@
 
 模板默认 Dev Container 基于 `ghcr.io/libodynamics/project_template/devcontainer:latest`。模板仓库用 `.devcontainer/base.Dockerfile` 构建并发布这个基础镜像；基础镜像中的 Node.js 来自 Ubuntu archive，npm 升级到 latest 以匹配全局 npm 工具。派生项目用 `.devcontainer/Dockerfile` 继承 `latest` 后追加自己的语言工具链、SDK、数据库、模拟器、交叉编译器、硬件工具，并记录在 `README.md`。
 
+`.devcontainer/base.Dockerfile` 仅用于维护基础镜像。派生项目默认删除它和对应的基础镜像发布 workflow；只有项目需要自建基础镜像供多个工作区、子项目或 CI 复用时才保留。保留时必须在 README 和 CI 中说明镜像名、tag 策略、发布 registry、触发条件、维护责任、更新节奏和回滚方式。
+
 模板 Dev Container 默认使用 `dev` 用户作为交互用户，默认 shell 是 `zsh`，并允许免密码 `sudo`。Dockerfile 构建阶段仍按 Docker 默认行为使用 root；派生项目确实需要交互式密码时，必须在 README 说明原因和设置方式。
+
+Docker 命名约定：
+
+- README 或对应开发环境文档必须声明基础镜像名、本地开发镜像名、Dev Container 显示名和运行时容器名。
+- `devcontainer.json`、CI、Docker Compose 和手动 `docker run` 示例必须复用同一组名称，不要让 Docker 为常规入口生成随机容器名。
+- 使用 Dockerfile 或 image 方式的 Dev Container，应通过 `build.options` 补充稳定 tag，并通过 `runArgs` 固定运行时容器名；使用 Docker Compose 时，应通过 `image`、service name 和需要时的 `container_name` 保持一致。
+- 需要同时打开多个 worktree 或多个克隆时，应在 README 中声明容器名后缀策略，避免互相抢占同一个运行时容器名。
 
 Docker、Docker Compose、Dev Container 和 CI 示例中的 bind mount 必须保持在当前项目边界内：宿主机源路径使用仓库根目录或仓库内子目录，例如 `$PWD`、`${GITHUB_WORKSPACE}` 或 `${localWorkspaceFolder}`；容器内目标路径使用项目工作区，例如 `/workspace` 或 `${containerWorkspaceFolder}`。不要随意挂载宿主机全局目录、用户主目录、上级目录、系统目录或临时目录。
 
-宿主机调用 Docker 执行编译、生成、打包或文档构建时，需要保留的产物必须写回当前项目目录下声明的产物目录，例如 `build/`、`dist/`、`target/`、`out/`、`docs/generated/` 或项目自定义目录。命令不能把唯一产物留在容器临时文件系统、匿名 volume、用户主目录、上级目录或项目外缓存目录。确实需要挂载项目外目录时，必须说明用途、最小权限、只读/读写边界、数据生命周期和清理方式。
+宿主机调用 Docker 执行编译、生成、打包、部署或文档构建时，需要保留的产物必须写回当前项目目录下声明的产物目录，例如 `build/`、`dist/`、`target/`、`out/`、`docs/generated/` 或项目自定义目录。README 必须同时声明宿主机可见路径和容器内输出路径，例如宿主机 `dist/` 对应容器 `/workspace/dist`。发布、部署、验收和回滚命令必须读取这个宿主机可见目录中的产物，命令不能把唯一产物留在容器临时文件系统、匿名 volume、用户主目录、上级目录或项目外缓存目录。确实需要挂载项目外目录时，必须说明用途、最小权限、只读/读写边界、数据生命周期和清理方式。
 
 项目级安装、编译、运行、测试、发布命令只写在 `README.md`。
 
@@ -128,7 +137,8 @@ Docker、Docker Compose、Dev Container 和 CI 示例中的 bind mount 必须保
 - `3rd/` 只放需要随仓库固定的第三方源码或供应商交付物；能由 Cargo/npm/pip 等包管理器解析的依赖，不复制到 `3rd/`。
 - 使用 git submodule 时，必须在 README 或对应文档说明初始化、更新和验证命令。
 - vendor copy 必须说明为什么不能用 submodule 或包管理器，并记录校验和或来源版本。
-- 修改第三方代码时，必须说明是否为本地 patch、如何重放、如何向上游回传或在升级时重新应用。
+- 默认不直接修改第三方代码、固件、SDK、供应商交付物或安装目录中的依赖源码。需要修复或适配时，优先通过上游修复、版本升级、配置、adapter/wrapper 或项目自有代码隔离处理。
+- 确需本地补丁时，必须把补丁作为项目自有交付物管理，记录来源、变更原因、补丁文件或重放命令、验证方式、如何向上游回传，以及第三方版本升级时如何重新应用或移除。
 
 ### 生成物
 
@@ -235,6 +245,13 @@ Plan 至少包含：
 - checkbox 任务
 - 验证步骤
 - 完成或废弃后的状态说明
+
+## 错误与异常处理
+
+- 程序、脚本、CLI、服务和 CI 任务出错时不得静默崩溃，也不得只返回无信息的失败状态。日志、stderr、CI 输出或用户可见错误中必须包含调用栈，或至少包含足以定位问题的错误类型、错误消息、失败操作和安全的上下文。
+- 捕获异常必须有明确目的，例如补充上下文后重新抛出、返回可处理的错误值、执行清理、有限重试或降级。禁止空 `catch`、空 `except`、吞掉异常后继续执行，或用宽泛异常捕获隐藏真实失败。
+- 面向最终用户的界面可以显示简洁错误提示，但诊断日志仍应保留可定位问题的信息。敏感数据、token、密钥、个人数据和专有业务 payload 不得出现在错误信息或调用栈日志中。
+- 新增或修改错误路径时，应根据风险补充测试或验证步骤，覆盖失败输入、外部依赖失败、超时、权限不足和资源清理等场景。
 
 ## 测试
 

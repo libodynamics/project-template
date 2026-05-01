@@ -1,8 +1,16 @@
 {
-  "name": "project_template",
+  "name": "project-template-devcontainer",
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    "options": [
+      "--tag",
+      "project-template-devcontainer:latest"
+    ]
   },
+  "runArgs": [
+    "--name",
+    "project-template-devcontainer"
+  ],
   "remoteUser": "dev",
   "updateRemoteUserUID": true,
   "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pre-commit install --install-hooks && python3 --version && node --version && npm --version && rustc --version && cargo --version && cargo clippy --version && rustfmt --version && gh --version && pre-commit --version && devcontainer --version && mmdc --version && plantuml -version && ncu --version",

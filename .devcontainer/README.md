@@ -12,15 +12,28 @@ FROM ghcr.io/libodynamics/project_template/devcontainer:latest
 
 公司策略是统一使用 `latest`。派生项目默认继承这个镜像，并在自己的 `.devcontainer/Dockerfile` 中追加项目专用工具链、SDK、模拟器、数据库客户端、硬件工具或缓存配置。
 
+模板仓库固定使用以下 Docker 名称：
+
+| 用途 | 名称 |
+|------|------|
+| 基础 Dev Container 镜像 | `ghcr.io/libodynamics/project_template/devcontainer:latest` |
+| 本地派生 Dev Container 镜像 | `project-template-devcontainer:latest` |
+| Dev Container 显示名 | `project-template-devcontainer` |
+| 运行时容器名 | `project-template-devcontainer` |
+
+派生项目初始化时必须把这些名称替换为项目自己的稳定名称，并保持 `devcontainer.json`、README、CI 和手动 `docker run` 示例一致。需要同时打开多个 worktree 或多个克隆时，应在 README 中声明容器名后缀策略，避免互相抢占同一个运行时容器名。
+
 ## 文件分工
 
 - `devcontainer.json`
 - `Dockerfile`：派生项目默认入口，基于 `ghcr.io/libodynamics/project_template/devcontainer:latest`
-- `base.Dockerfile`：模板仓库维护的基础镜像源文件，由 CI 发布到 GHCR
+- `base.Dockerfile`：仅供模板仓库维护通用基础镜像，由 CI 发布到 GHCR；派生项目默认删除
 - `compose.yaml`：需要本地数据库、缓存、消息队列等服务时再添加
 - `scripts/`：容器初始化脚本
 
 除非项目明确发布生产容器镜像，否则不要在仓库根目录添加 Dockerfile。
+
+派生项目只有在需要维护自己的组织级或项目级基础镜像时才保留 `base.Dockerfile`。保留时必须同步更新 README、CI 和镜像命名表，说明镜像发布到哪里、谁维护、何时重建、如何回滚；否则应删除 `base.Dockerfile` 和基础镜像发布 workflow，避免贡献者误以为每个项目都要构建基础镜像。
 
 ## 基础镜像工具
 
@@ -72,10 +85,14 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ```bash
 docker build --pull -f .devcontainer/base.Dockerfile -t ghcr.io/libodynamics/project_template/devcontainer:latest .devcontainer
 docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcontainer:latest .devcontainer
-docker run --rm -v "$PWD:/workspace" -w /workspace project-template-devcontainer:latest bash -lc 'pre-commit run --all-files && rustc --version && node --version && npm --version && devcontainer --version && mmdc --version && plantuml -version && ncu --version'
+docker run --rm --name project-template-devcontainer -v "$PWD:/workspace" -w /workspace project-template-devcontainer:latest bash -lc 'pre-commit run --all-files && rustc --version && node --version && npm --version && devcontainer --version && mmdc --version && plantuml -version && ncu --version'
 ```
 
 手动 `docker run`、Compose volume 和 Dev Container mount 只能把当前仓库或仓库内子目录挂载到容器项目工作区内，例如 `$PWD:/workspace`。不要把用户主目录、上级目录、系统目录或无关临时目录挂入容器。宿主机调用 Docker 编译后，需要保留的产物应写到项目目录下的 `build/`、`dist/`、`target/`、`out/` 或项目声明的产物目录，确保退出容器后仍能在宿主机项目目录中看到。
+
+## 产物路径
+
+Docker/Dev Container 中生成的编译、打包、部署或文档产物，必须写入当前项目 bind mount 内的声明目录。README 中应同时列出宿主机路径和容器内路径，例如宿主机 `dist/` 对应容器 `/workspace/dist`。发布、部署、验收和回滚命令必须读取这个宿主机可见目录中的产物，不要依赖容器临时文件系统、匿名 volume、`/tmp`、`/home/dev`、上级目录或项目外缓存中的唯一副本。
 
 CI 会在 `main` 分支和每周定时任务中把基础镜像发布为：
 

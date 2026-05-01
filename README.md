@@ -19,6 +19,7 @@ git status --short --branch
 rg -n "TODO|YYYY-MM-DD|@TODO-owner" .
 docker build --pull -f .devcontainer/base.Dockerfile -t ghcr.io/libodynamics/project_template/devcontainer:latest .devcontainer
 docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcontainer:latest .devcontainer
+docker run --rm --name project-template-devcontainer -v "$PWD:/workspace" -w /workspace project-template-devcontainer:latest bash -lc 'pre-commit run --all-files && rustc --version && node --version && npm --version && devcontainer --version && mmdc --version && plantuml -version && ncu --version'
 ```
 
 `TODO` 命中应来自模板占位或示例。新增、删除或移动模板文件时，应同步检查 `README.md`、`AGENTS.md`、`docs/README.md` 和 `docs/conventions.md` 中的文档入口。
@@ -29,10 +30,11 @@ docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcon
 
 - [ ] 替换 `README.md`、`AGENTS.md`、`SECURITY.md` 和文档模板中的项目占位内容。
 - [ ] 确认项目名称、仓库名、包名、镜像名、Dev Container `name` 与发布目标。
+- [ ] 默认删除 `.devcontainer/base.Dockerfile` 和基础镜像发布 workflow；只有项目要维护自己的基础镜像时才保留，并说明镜像名、发布目标和维护责任。
 - [ ] 根据真实团队更新 `.github/CODEOWNERS`。
 - [ ] 确认 MIT 许可证是否适用；不适用时替换 `LICENSE` 并同步 README。
 - [ ] 补齐安装、编译、运行、测试、打包、发布命令及运行位置。
-- [ ] 声明 Docker/Dev Container 编译产物目录，确保宿主机可在当前项目目录下看到需要保留的产物。
+- [ ] 声明 Docker/Dev Container 编译、打包和部署产物目录，确保容器内输出路径和宿主机可见路径匹配，且需要保留的产物写回当前项目目录。
 - [ ] 补齐架构边界、运行模式、验证模式、硬件/外部服务依赖和残余风险。
 - [ ] 根据项目需要启用或调整 branch protection、DCO、CI、review 和发布门禁。
 - [ ] 删除不适用的硬件、生产、供应商、SOP 或文档模板章节。
@@ -56,6 +58,17 @@ TODO：写清楚本项目实际使用的命令。
 默认使用 `.devcontainer/`。
 
 默认 Dev Container 基于 `ghcr.io/libodynamics/project_template/devcontainer:latest`，并安装通用开发、文档、协作、Node.js 和 Rust 基础工具。模板仓库用 `.devcontainer/base.Dockerfile` 构建并发布这个基础镜像；派生项目在 `.devcontainer/Dockerfile` 中继续 `FROM` 该 `latest` 镜像并按需补充 SDK、数据库、模拟器、硬件工具或项目专用依赖。
+
+`.devcontainer/base.Dockerfile` 仅供 `project_template` 仓库维护通用基础镜像。派生项目默认删除它和对应的基础镜像发布 workflow；如果项目需要自建基础镜像，必须在本文件说明镜像名、tag 策略、发布 registry、触发条件、维护责任和回滚方式。
+
+模板仓库的 Docker 命名固定如下，派生项目应在初始化时替换为自己的稳定名称：
+
+| 用途 | 名称 |
+|------|------|
+| 基础 Dev Container 镜像 | `ghcr.io/libodynamics/project_template/devcontainer:latest` |
+| 本地派生 Dev Container 镜像 | `project-template-devcontainer:latest` |
+| Dev Container 显示名 | `project-template-devcontainer` |
+| 运行时容器名 | `project-template-devcontainer` |
 
 TODO：说明如何打开 Dev Container，以及本项目额外的 `postCreateCommand` 会安装什么。
 
@@ -103,6 +116,13 @@ TODO：说明如何打开 Dev Container，以及本项目额外的 `postCreateCo
 ```bash
 # TODO
 ```
+
+如果打包或部署产物由 Docker/Dev Container 生成，本节必须写清楚：
+
+- 宿主机项目目录下的产物目录，例如 `dist/`、`build/`、`target/release/`、`out/` 或项目自定义目录。
+- 容器内对应输出路径，例如 `/workspace/dist`，并确保它来自当前项目 bind mount，而不是容器临时目录、匿名 volume、用户主目录或项目外路径。
+- 发布命令如何从宿主机可见目录读取产物，以及部署、验收、回滚使用的是哪个路径。
+- 需要保留的产物名称、校验方式和清理方式。
 
 ## 项目文档
 
