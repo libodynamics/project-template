@@ -9,7 +9,7 @@
   },
   "runArgs": [
     "--name",
-    "project-template-devcontainer"
+    "${localEnv:DEVCONTAINER_NAME}"
   ],
   "remoteUser": "dev",
   "updateRemoteUserUID": true,

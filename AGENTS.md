@@ -75,7 +75,8 @@
 
 - 原则上，项目使用的包、依赖、工具链、基础镜像和开发环境应采用当前可用的最新稳定版本。
 - 公司模板默认使用 `latest` 策略。Dev Container 基础镜像、派生项目继承的基础镜像和通用开发工具不做长期版本冻结。
-- 开发工具、构建工具、语言工具链、SDK、模拟器、数据库客户端、pre-commit hooks，以及开发、编译、测试、生成、打包、发布过程中用到的二进制文件，默认必须安装并运行在 Dev Container 或 CI/self-hosted runner 声明的隔离环境中，不应要求贡献者修改宿主机全局环境。
+- 所有派生项目默认不考虑贡献者宿主机本地运行环境；宿主机只保留 Git、Docker / Docker Desktop、支持 Dev Container 的编辑器或 AI agent，以及启动容器所需的轻量入口。
+- 开发工具、构建工具、语言工具链、SDK、模拟器、数据库客户端、pre-commit hooks，以及开发、编译、运行、测试、生成、打包、发布过程中用到的二进制文件，必须安装并运行在常驻 Dev Container 容器或 CI/self-hosted runner 声明的隔离环境中。宿主机侧只能执行 Docker/Dev Container 编排命令，不得直接运行项目工具链。
 - 依赖和环境需要持续更新，不能长期停留在模板创建时的版本。
 - 出于兼容性、认证、安全或硬件限制不能使用 `latest` 或最新稳定版本时，必须在 `README.md`、`docs/conventions.md` 或对应 ADR 中说明原因、影响范围和重新评估条件。
 
@@ -166,11 +167,12 @@ App --> Store : TODO
 7. 平台特定逻辑必须隔离在清晰边界后，并有对应测试或验证路径。
 8. 出错时不得静默崩溃或只返回无信息失败；CLI、服务日志、CI 和脚本必须输出调用栈或足以定位问题的错误类型、错误消息和安全上下文。
 9. 不直接修改第三方代码、供应商交付物或安装目录中的依赖源码；确需本地补丁时，必须记录来源、补丁文件、重放方式、上游回传或升级时重新应用方式。
-10. Docker 镜像名、Dev Container 显示名和运行时容器名必须在 README 或对应开发环境文档中声明，并在 `devcontainer.json`、CI、Docker Compose 和手动 `docker run` 示例中保持一致；不要依赖 Docker 自动生成的随机容器名作为常规入口。
-11. `.devcontainer/base.Dockerfile` 仅供模板仓库或自建基础镜像的项目保留。派生项目默认删除；确实保留时，必须在 README、CI 和镜像命名约定中说明发布目标、触发条件、维护责任和回滚方式。
-12. Docker、Docker Compose、Dev Container 或 CI 中的 bind mount，宿主机源路径必须是当前项目目录或其子目录，容器内目标路径必须落在项目工作区内。宿主机调用 Docker 编译、生成、打包或部署后，需要保留的产物必须写回当前项目目录下声明的产物目录，例如 `build/`、`dist/`、`target/`、`out/` 或项目自定义目录；README 必须同时声明容器内输出路径和宿主机可见路径，确保发布、部署、验收和回滚使用同一份产物，不能只留在容器临时文件系统或项目外路径。确实需要挂载项目外目录时，必须在 README、compose 文件注释或对应文档中说明理由、只读/读写边界和清理方式。
-13. 手写源代码文件原则上不超过 500 行；超过时必须说明职责边界、暂不拆分理由或拆分计划。详细规则见 `docs/conventions.md`。
-14. 破坏性操作需要人工确认，包括 force push、重写历史、批量删除、reset、生产数据修改。
+10. 所有安装、编译、构建、运行、测试、生成、打包、发布和 pre-commit hooks 必须在常驻后台的 Dev Container 容器或 CI/self-hosted runner 中执行；宿主机不作为项目运行环境，只作为 Docker/Dev Container 编排入口。
+11. Docker 镜像名、Dev Container 显示名、常驻 Dev Container 容器名和项目运行时容器名必须在 README 或对应开发环境文档中声明，并在 `devcontainer.json`、CI、Docker Compose 和手动 `docker run` 示例中保持一致；不要依赖 Docker 自动生成的随机容器名作为常规入口。常驻 Dev Container 容器名必须使用 `{project}-devcontainer-{username}-{commit4}`；项目服务或应用运行时容器名必须使用 `{project}-{service}-{username}-{commit4}`。`username` 必须归一化为 Docker 容器名允许的字符。`service` 必须是 README 中声明的稳定服务标识。`commit4` 必须取当前 `HEAD` commit SHA 前 4 位；尚无 commit 的仓库不得启动常驻 Dev Container 或项目运行时容器，必须先创建初始 commit。
+12. `.devcontainer/base.Dockerfile` 仅供模板仓库或自建基础镜像的项目保留。派生项目默认删除；确实保留时，必须在 README、CI 和镜像命名约定中说明发布目标、触发条件、维护责任和回滚方式。
+13. Docker、Docker Compose、Dev Container 或 CI 中的 bind mount，宿主机源路径必须是当前项目目录或其子目录，容器内目标路径必须落在项目工作区内。宿主机调用 Docker 编排编译、生成、打包或部署后，需要保留的产物必须写回当前项目目录下声明的产物目录，例如 `build/`、`dist/`、`target/`、`out/` 或项目自定义目录；README 必须同时声明容器内输出路径和宿主机可见路径，确保发布、部署、验收和回滚使用同一份产物，不能只留在容器临时文件系统或项目外路径。确实需要挂载项目外目录时，必须在 README、compose 文件注释或对应文档中说明理由、只读/读写边界和清理方式。
+14. 手写源代码文件原则上不超过 500 行；超过时必须说明职责边界、暂不拆分理由或拆分计划。详细规则见 `docs/conventions.md`。
+15. 破坏性操作需要人工确认，包括 force push、重写历史、批量删除、reset、生产数据修改。
 
 ## AI Agent 工作流
 

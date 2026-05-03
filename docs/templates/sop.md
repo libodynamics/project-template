@@ -24,7 +24,7 @@
 
 | 产物 | 生成环境 | 宿主机路径 | 容器内路径 | 校验方式 | 回滚使用 |
 |------|----------|------------|------------|----------|----------|
-| TODO | TODO：宿主机 / Dev Container / CI | TODO | TODO | TODO | TODO |
+| TODO | TODO：常驻 Dev Container / CI / self-hosted runner | TODO | TODO | TODO | TODO |
 
 ## 流程图
 

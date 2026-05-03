@@ -28,7 +28,7 @@
     devcontainer.json
     Dockerfile
     base.Dockerfile      # 仅模板仓库或自建基础镜像的项目保留
-    compose.yaml          # 可选，仅在本地开发需要多服务时使用
+    compose.yaml          # 可选，仅在容器内开发需要多服务时使用
     scripts/              # 可选，容器初始化脚本
   docs/
     README.md
@@ -76,22 +76,28 @@
 
 ## 开发环境
 
-默认开发环境是 Dev Container。
+默认开发和项目命令入口是常驻后台的 Dev Container。派生项目不维护宿主机本地运行路径；宿主机只负责 Git、Docker/Dev Container 编排，以及支持 Dev Container 的编辑器或 AI agent。
 
-宿主机依赖应保持最少：
+宿主机依赖只保留：
 
 - Git
 - Docker / Docker Desktop
 - 支持 Dev Container 的编辑器或 AI agent 工具
-- 无法放进容器的平台原生 SDK、硬件工具或签名工具，必须在 `README.md` 中说明
 
-开发、编译、测试、生成、打包、发布和 pre-commit hooks 过程中用到的工具、语言工具链、SDK、模拟器、数据库客户端和其他二进制文件，默认必须安装并运行在 Dev Container 或 CI/self-hosted runner 声明的隔离环境中。项目不应要求贡献者通过 `brew`、系统包管理器或手工复制文件来修改宿主机全局环境；确实无法容器化的原生工具必须记录原因、影响范围和替代验证路径。
+开发、编译、运行、测试、生成、打包、发布和 pre-commit hooks 过程中用到的工具、语言工具链、SDK、模拟器、数据库客户端和其他二进制文件，必须安装并运行在常驻 Dev Container 容器或 CI/self-hosted runner 声明的隔离环境中。项目不应要求贡献者通过 `brew`、系统包管理器或手工复制文件来修改宿主机全局环境；确实需要硬件、签名、GUI、网络或平台服务时，应通过 Docker device、volume、network、远程服务、CI 或 self-hosted runner 暴露给容器，并在 `README.md` 说明前置条件和替代验证路径。
+
+常驻 Dev Container 工作流：
+
+- 每个项目必须提供一个可长期运行在后台的 Dev Container 容器作为开发、编译、运行、测试、生成、打包和发布入口。
+- 容器启动后应复用同一个工作区 bind mount；后续命令通过 `docker exec`、`devcontainer exec`、编辑器终端或 AI agent 的容器终端进入容器执行。
+- 宿主机侧 wrapper 只能做容器发现、启动、停止、重建和 `exec` 转发，不得直接调用项目语言工具链、构建工具、测试工具或发布工具。
+- 需要重建同名容器时，必须确认旧容器没有需要保留的状态；需要保留的构建、测试、发布产物必须已经写回项目目录下声明的产物目录。
 
 平台约定：
 
 - Windows 开发者优先使用 WSL2 工作区。
 - macOS/Linux 开发者按公司策略使用 Docker Desktop 或 Docker Engine。
-- 硬件访问、签名、公证、GUI 验证、平台安装包构建，可能需要原生机器或 self-hosted runner。
+- 硬件访问、签名、公证、GUI 验证、平台安装包构建如需平台能力，应优先由容器透传、远程服务、CI 或 self-hosted runner 提供；不要把开发者宿主机配置成项目运行环境。
 
 模板默认 Dev Container 基于 `ghcr.io/libodynamics/project_template/devcontainer:latest`。模板仓库用 `.devcontainer/base.Dockerfile` 构建并发布这个基础镜像；基础镜像中的 Node.js 来自 Ubuntu archive，npm 升级到 latest 以匹配全局 npm 工具。派生项目用 `.devcontainer/Dockerfile` 继承 `latest` 后追加自己的语言工具链、SDK、数据库、模拟器、交叉编译器、硬件工具，并记录在 `README.md`。
 
@@ -101,10 +107,16 @@
 
 Docker 命名约定：
 
-- README 或对应开发环境文档必须声明基础镜像名、本地开发镜像名、Dev Container 显示名和运行时容器名。
+- README 或对应开发环境文档必须声明基础镜像名、本地开发镜像名、Dev Container 显示名、常驻 Dev Container 容器名和项目服务/应用运行时容器名。
 - `devcontainer.json`、CI、Docker Compose 和手动 `docker run` 示例必须复用同一组名称，不要让 Docker 为常规入口生成随机容器名。
-- 使用 Dockerfile 或 image 方式的 Dev Container，应通过 `build.options` 补充稳定 tag，并通过 `runArgs` 固定运行时容器名；使用 Docker Compose 时，应通过 `image`、service name 和需要时的 `container_name` 保持一致。
-- 需要同时打开多个 worktree 或多个克隆时，应在 README 中声明容器名后缀策略，避免互相抢占同一个运行时容器名。
+- 常驻 Dev Container 容器名必须使用 `{project}-devcontainer-{username}-{commit4}`。
+- 项目服务或应用运行时容器名必须使用 `{project}-{service}-{username}-{commit4}`。
+- 示例：`ranger-devcontainer-nzh-a1b2`、`ranger-daemon-nzh-a1b2`。
+- `username` 必须先归一化为 Docker 容器名允许的字符。
+- `service` 必须是 README 中声明的稳定服务标识，例如 `daemon`、`web`、`db`、`sim`。
+- `commit4` 必须取当前 `HEAD` commit SHA 前 4 位，例如 `git rev-parse --verify HEAD | cut -c1-4`。尚无 commit 的仓库不得启动常驻 Dev Container 或项目运行时容器，必须先创建初始 commit。
+- 使用 Dockerfile 或 image 方式的 Dev Container，应通过 `build.options` 补充稳定 tag，并通过 `runArgs` 固定常驻 Dev Container 容器名；README 必须提供设置 `DEVCONTAINER_NAME` 或等价环境变量的命令。使用 Docker Compose 时，应通过 `image`、service name 和需要时的 `container_name` 保持一致。
+- 需要同时打开多个 worktree 或多个克隆时，容器名仍必须使用当前 `HEAD` commit SHA 前 4 位，不得改用分支名或路径名作为后缀。
 
 Docker、Docker Compose、Dev Container 和 CI 示例中的 bind mount 必须保持在当前项目边界内：宿主机源路径使用仓库根目录或仓库内子目录，例如 `$PWD`、`${GITHUB_WORKSPACE}` 或 `${localWorkspaceFolder}`；容器内目标路径使用项目工作区，例如 `/workspace` 或 `${containerWorkspaceFolder}`。不要随意挂载宿主机全局目录、用户主目录、上级目录、系统目录或临时目录。
 
