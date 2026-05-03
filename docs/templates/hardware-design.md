@@ -50,7 +50,7 @@ flowchart LR
 | 验证项 | 命令/步骤 | 运行位置 | 需要硬件 | 超时 | 通过标准 |
 |--------|-----------|----------|----------|------|----------|
 | 容器构建 | TODO | TODO：常驻 Dev Container / CI | 否 | TODO | TODO |
-| 仿真/模拟器 | TODO | TODO | 否 | TODO | TODO |
+| 仿真/模拟器 | TODO | TODO：常驻 Dev Container / CI | 否 | TODO | TODO |
 | 硬件 bring-up | TODO | TODO：常驻 Dev Container 透传设备 / self-hosted runner | 是 | TODO | TODO |
 | 生产夹具测试 | TODO | TODO：产线容器环境 / self-hosted runner | 是 | TODO | TODO |
 

@@ -91,6 +91,7 @@
 - 每个项目必须提供一个可长期运行在后台的 Dev Container 容器作为开发、编译、运行、测试、生成、打包和发布入口。
 - 容器启动后应复用同一个工作区 bind mount；后续命令通过 `docker exec`、`devcontainer exec`、编辑器终端或 AI agent 的容器终端进入容器执行。
 - 宿主机侧 wrapper 只能做容器发现、启动、停止、重建和 `exec` 转发，不得直接调用项目语言工具链、构建工具、测试工具或发布工具。
+- `docker run` 只能用于创建常驻后台容器，例如 `docker run -d ... sleep infinity`；项目命令和验证命令必须在容器启动后通过 `docker exec "$DEVCONTAINER_NAME" ...` 执行，不得使用一次性 `docker run --rm ... <项目命令>` 作为常规入口。
 - 需要重建同名容器时，必须确认旧容器没有需要保留的状态；需要保留的构建、测试、发布产物必须已经写回项目目录下声明的产物目录。
 
 平台约定：
@@ -109,14 +110,14 @@ Docker 命名约定：
 
 - README 或对应开发环境文档必须声明基础镜像名、本地开发镜像名、Dev Container 显示名、常驻 Dev Container 容器名和项目服务/应用运行时容器名。
 - `devcontainer.json`、CI、Docker Compose 和手动 `docker run` 示例必须复用同一组名称，不要让 Docker 为常规入口生成随机容器名。
-- 常驻 Dev Container 容器名必须使用 `{project}-devcontainer-{username}-{commit4}`。
-- 项目服务或应用运行时容器名必须使用 `{project}-{service}-{username}-{commit4}`。
-- 示例：`ranger-devcontainer-nzh-a1b2`、`ranger-daemon-nzh-a1b2`。
+- 常驻 Dev Container 容器名必须使用 `{project}-devcontainer-{username}-{branch}`。
+- 项目服务或应用运行时容器名必须使用 `{project}-{service}-{username}-{branch}`。
+- 示例：`ranger-devcontainer-nzh-main`、`ranger-daemon-nzh-main`。
 - `username` 必须先归一化为 Docker 容器名允许的字符。
 - `service` 必须是 README 中声明的稳定服务标识，例如 `daemon`、`web`、`db`、`sim`。
-- `commit4` 必须取当前 `HEAD` commit SHA 前 4 位，例如 `git rev-parse --verify HEAD | cut -c1-4`。尚无 commit 的仓库不得启动常驻 Dev Container 或项目运行时容器，必须先创建初始 commit。
+- `branch` 必须来自当前具名 Git 分支，例如 `git branch --show-current`。分支名中的 `/`、空格和其他特殊字符必须替换为 `-`。detached HEAD 状态不得启动常驻 Dev Container 或项目运行时容器，必须先切换到具名分支。
 - 使用 Dockerfile 或 image 方式的 Dev Container，应通过 `build.options` 补充稳定 tag，并通过 `runArgs` 固定常驻 Dev Container 容器名；README 必须提供设置 `DEVCONTAINER_NAME` 或等价环境变量的命令。使用 Docker Compose 时，应通过 `image`、service name 和需要时的 `container_name` 保持一致。
-- 需要同时打开多个 worktree 或多个克隆时，容器名仍必须使用当前 `HEAD` commit SHA 前 4 位，不得改用分支名或路径名作为后缀。
+- 需要同时打开多个 worktree 或多个克隆时，容器名仍必须使用当前具名 Git 分支作为后缀；同一宿主机、同一用户、同一项目、同一分支只允许一个常驻 Dev Container。
 
 Docker、Docker Compose、Dev Container 和 CI 示例中的 bind mount 必须保持在当前项目边界内：宿主机源路径使用仓库根目录或仓库内子目录，例如 `$PWD`、`${GITHUB_WORKSPACE}` 或 `${localWorkspaceFolder}`；容器内目标路径使用项目工作区，例如 `/workspace` 或 `${containerWorkspaceFolder}`。不要随意挂载宿主机全局目录、用户主目录、上级目录、系统目录或临时目录。
 

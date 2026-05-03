@@ -35,11 +35,11 @@
 | 验证项 | 命令/步骤 | 运行位置 | 需要硬件/外部服务 | 超时 | 可接受的未验证原因 |
 |--------|-----------|----------|--------------------|------|----------------------|
 | 单元测试 | TODO | TODO：常驻 Dev Container / CI | 否 | TODO | TODO |
-| 集成测试 | TODO | TODO | TODO | TODO | TODO |
+| 集成测试 | TODO | TODO：常驻 Dev Container / CI | TODO | TODO | TODO |
 | 仿真/模拟器 | TODO | TODO：例如 QEMU / 浏览器 / mock 服务 | TODO | TODO | TODO |
 | 硬件诊断 | TODO | TODO：常驻 Dev Container 透传设备 / self-hosted runner / 产线容器环境 | 是 | TODO | TODO |
-| 生产/SOP 演练 | TODO | TODO | TODO | TODO | TODO |
-| 文档检查 | TODO | TODO | 否 | TODO | TODO |
+| 生产/SOP 演练 | TODO | TODO：常驻 Dev Container / self-hosted runner / 产线容器环境 | TODO | TODO | TODO |
+| 文档检查 | TODO | TODO：常驻 Dev Container / CI | 否 | TODO | TODO |
 
 验证结果：
 

@@ -10,7 +10,7 @@
 
 - PR 应小而可审。
 - 一个提交尽量只处理一个关注点。
-- pre-commit hooks 和提交前检查必须在常驻 Dev Container 容器或 CI/self-hosted runner 声明的隔离环境中运行；宿主机侧最多保留调用容器内命令的轻量入口。
+- pre-commit hooks 和提交前检查必须先启动常驻 Dev Container 容器，再通过 `docker exec`、`devcontainer exec` 或 CI/self-hosted runner 声明的等价容器入口运行；宿主机侧最多保留调用容器内命令的轻量入口。
 - 未经明确批准，不重写共享历史。
 - 不把无关重构混入功能或 bugfix。
 - 破坏性操作需要人工确认，包括 force push、重写历史、批量删除、reset、生产数据修改。

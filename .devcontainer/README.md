@@ -19,9 +19,10 @@ FROM ghcr.io/libodynamics/project_template/devcontainer:latest
 | 基础 Dev Container 镜像 | `ghcr.io/libodynamics/project_template/devcontainer:latest` |
 | 本地派生 Dev Container 镜像 | `project-template-devcontainer:latest` |
 | Dev Container 显示名 | `project-template-devcontainer` |
-| 运行时容器名 | `project-template-devcontainer` |
+| 常驻 Dev Container 容器名 | `project-template-devcontainer-{username}-{branch}` |
+| 项目服务/应用运行时容器名 | `project-template-{service}-{username}-{branch}` |
 
-派生项目初始化时必须把这些名称替换为项目自己的稳定名称，并保持 `devcontainer.json`、README、CI 和手动 `docker run` 示例一致。需要同时打开多个 worktree 或多个克隆时，应在 README 中声明容器名后缀策略，避免互相抢占同一个运行时容器名。
+派生项目初始化时必须把这些名称替换为项目自己的稳定名称，并保持 `devcontainer.json`、README、CI 和手动 `docker run` 示例一致。容器名最后一段必须使用当前具名 Git 分支，分支名中的 `/`、空格和其他特殊字符必须替换为 `-`；detached HEAD 状态不得启动常驻 Dev Container 或项目运行时容器，必须先切换到具名分支。
 
 ## 文件分工
 
@@ -80,15 +81,38 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 ## 手动 Docker 验证
 
-维护模板基础镜像时，可以在本地直接构建：
+维护模板基础镜像时，宿主机只负责镜像构建、容器创建和容器启动。默认先启动一个可复用的常驻 Dev Container；后续所有检查通过 `docker exec` 在该容器中运行。
 
 ```bash
 docker build --pull -f .devcontainer/base.Dockerfile -t ghcr.io/libodynamics/project_template/devcontainer:latest .devcontainer
 docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcontainer:latest .devcontainer
-docker run --rm --name project-template-devcontainer -v "$PWD:/workspace" -w /workspace project-template-devcontainer:latest bash -lc 'pre-commit run --all-files && rustc --version && node --version && npm --version && devcontainer --version && mmdc --version && plantuml -version && ncu --version'
+DEVCONTAINER_USER="$(id -un | tr -cd '[:alnum:]_.-')"
+DEVCONTAINER_BRANCH="$(git branch --show-current | tr '/ ' '--' | tr -cd '[:alnum:]_.-')"
+if [ -z "$DEVCONTAINER_BRANCH" ]; then echo "detached HEAD is not allowed for the devcontainer name" >&2; exit 1; fi
+export DEVCONTAINER_NAME="project-template-devcontainer-${DEVCONTAINER_USER}-${DEVCONTAINER_BRANCH}"
+docker inspect "$DEVCONTAINER_NAME" >/dev/null 2>&1 || docker run -d --name "$DEVCONTAINER_NAME" \
+  --mount "type=bind,src=$(pwd),dst=/workspace" \
+  -w /workspace \
+  project-template-devcontainer:latest sleep infinity
+if [ "$(docker inspect -f '{{.State.Running}}' "$DEVCONTAINER_NAME")" != "true" ]; then docker start "$DEVCONTAINER_NAME" >/dev/null; fi
+docker exec "$DEVCONTAINER_NAME" bash -lc '
+    git config --global --add safe.directory /workspace &&
+    git status --short --branch &&
+    rg -n "TODO|YYYY-MM-DD|@TODO-owner" . &&
+    pre-commit run --all-files &&
+    rustc --version &&
+    node --version &&
+    npm --version &&
+    devcontainer --version &&
+    mmdc --version &&
+    plantuml -version &&
+    ncu --version
+  '
 ```
 
-手动 `docker run`、Compose volume 和 Dev Container mount 只能把当前仓库或仓库内子目录挂载到容器项目工作区内，例如 `$PWD:/workspace`。不要把用户主目录、上级目录、系统目录或无关临时目录挂入容器。宿主机调用 Docker 编译后，需要保留的产物应写到项目目录下的 `build/`、`dist/`、`target/`、`out/` 或项目声明的产物目录，确保退出容器后仍能在宿主机项目目录中看到。
+容器已经存在但停止时，先运行 `docker start "$DEVCONTAINER_NAME"`，再运行 `docker exec ...`；新 shell 中运行前必须先按上方规则重新设置同一个 `DEVCONTAINER_NAME`。镜像、挂载或工作区路径变化时，确认旧容器没有需要保留的状态，删除旧容器并重新按本节创建。
+
+手动 `docker run`、Compose volume 和 Dev Container mount 只能把当前仓库或仓库内子目录挂载到容器项目工作区内，例如 `$PWD:/workspace`。`docker run` 只用于创建常驻后台容器，不得直接执行项目命令；项目检查、构建、测试、生成、打包和发布命令必须通过 `docker exec "$DEVCONTAINER_NAME" ...` 进入已启动容器执行。不要把用户主目录、上级目录、系统目录或无关临时目录挂入容器。宿主机调用 Docker 编排后，需要保留的产物应写到项目目录下的 `build/`、`dist/`、`target/`、`out/` 或项目声明的产物目录，确保退出容器后仍能在宿主机项目目录中看到。
 
 ## 产物路径
 
@@ -101,6 +125,8 @@ ghcr.io/libodynamics/project_template/devcontainer:latest
 ```
 
 ## 验证环境
+
+以下命令只在已启动的常驻 Dev Container 内执行；宿主机侧使用 `docker exec "$DEVCONTAINER_NAME" ...` 进入容器。
 
 ```bash
 cat /etc/os-release

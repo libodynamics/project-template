@@ -15,7 +15,6 @@ concurrency:
 env:
   BASE_DEVCONTAINER_IMAGE: ghcr.io/libodynamics/project_template/devcontainer
   DEVCONTAINER_IMAGE: project-template-devcontainer
-  DEVCONTAINER_CONTAINER: project-template-devcontainer
 
 jobs:
   template:
@@ -65,15 +64,24 @@ jobs:
 
       - name: Run template checks in container
         run: |
-          docker run --rm \
+          DEVCONTAINER_BRANCH_SOURCE="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          DEVCONTAINER_BRANCH="$(printf '%s' "${DEVCONTAINER_BRANCH_SOURCE}" | tr '/ ' '--' | tr -cd '[:alnum:]_.-')"
+          if [ -z "${DEVCONTAINER_BRANCH}" ]; then echo "empty Git branch name is not allowed for the devcontainer name" >&2; exit 1; fi
+          DEVCONTAINER_CONTAINER="${DEVCONTAINER_IMAGE}-ci-${DEVCONTAINER_BRANCH}"
+
+          docker run -d \
             --name "${DEVCONTAINER_CONTAINER}" \
             --mount "type=bind,src=${GITHUB_WORKSPACE},dst=/workspace" \
             -e HOME=/tmp/project-template-ci \
             -w /workspace \
-            "${DEVCONTAINER_IMAGE}:latest" \
-            bash -lc '
+            "${DEVCONTAINER_IMAGE}:latest" sleep infinity
+          trap 'docker rm -f "${DEVCONTAINER_CONTAINER}" >/dev/null 2>&1 || true' EXIT
+
+          docker exec "${DEVCONTAINER_CONTAINER}" bash -lc '
               mkdir -p "$HOME" &&
               git config --global --add safe.directory /workspace &&
+              git status --short --branch &&
+              rg -n "TODO|YYYY-MM-DD|@TODO-owner" . &&
               pre-commit run --all-files &&
               python3 --version &&
               node --version &&
