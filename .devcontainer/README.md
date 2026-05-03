@@ -86,8 +86,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 ```bash
 docker build --pull -f .devcontainer/base.Dockerfile -t ghcr.io/libodynamics/project_template/devcontainer:latest .devcontainer
 docker build --pull=false -f .devcontainer/Dockerfile -t project-template-devcontainer:latest .devcontainer
-DEVCONTAINER_USER="$(id -un | tr -cd '[:alnum:]_.-')"
-DEVCONTAINER_BRANCH="$(git branch --show-current | tr '/ ' '--' | tr -cd '[:alnum:]_.-')"
+DEVCONTAINER_USER="$(id -un | sed -E 's/[^[:alnum:]_.-]+/-/g; s/^-+//; s/-+$//')"
+DEVCONTAINER_BRANCH="$(git branch --show-current | sed -E 's/[^[:alnum:]_.-]+/-/g; s/^-+//; s/-+$//')"
 if [ -z "$DEVCONTAINER_BRANCH" ]; then echo "detached HEAD is not allowed for the devcontainer name" >&2; exit 1; fi
 export DEVCONTAINER_NAME="project-template-devcontainer-${DEVCONTAINER_USER}-${DEVCONTAINER_BRANCH}"
 docker inspect "$DEVCONTAINER_NAME" >/dev/null 2>&1 || docker run -d --name "$DEVCONTAINER_NAME" \

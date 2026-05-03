@@ -65,7 +65,7 @@ jobs:
       - name: Run template checks in container
         run: |
           DEVCONTAINER_BRANCH_SOURCE="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          DEVCONTAINER_BRANCH="$(printf '%s' "${DEVCONTAINER_BRANCH_SOURCE}" | tr '/ ' '--' | tr -cd '[:alnum:]_.-')"
+          DEVCONTAINER_BRANCH="$(printf '%s' "${DEVCONTAINER_BRANCH_SOURCE}" | sed -E 's/[^[:alnum:]_.-]+/-/g; s/^-+//; s/-+$//')"
           if [ -z "${DEVCONTAINER_BRANCH}" ]; then echo "empty Git branch name is not allowed for the devcontainer name" >&2; exit 1; fi
           DEVCONTAINER_CONTAINER="${DEVCONTAINER_IMAGE}-ci-${DEVCONTAINER_BRANCH}"
 
